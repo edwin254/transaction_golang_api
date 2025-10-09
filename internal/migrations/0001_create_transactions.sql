@@ -1,0 +1,10 @@
+CREATE TABLE transactions (
+  id TEXT PRIMARY KEY,
+  amount REAL NOT NULL,
+  currency TEXT NOT NULL,
+  sender TEXT NOT NULL,
+  receiver TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
