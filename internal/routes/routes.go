@@ -15,11 +15,11 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	ctrl := controller.NewTransactionController(svc)
 
 	api := router.Group("/api/v1")
-	tx := api.Group("/transactions")
+	trx := api.Group("/transactions")
 	{
-		tx.POST("/", ctrl.CreateTransaction)
-		tx.GET("/:id", ctrl.GetTransactionByID)
-		tx.GET("/", ctrl.ListTransactions)
-		tx.PUT("/:id/status", ctrl.UpdateTransactionStatus)
+		trx.POST("/", ctrl.CreateTransaction)
+		trx.GET("/:id", ctrl.GetTransactionByID)
+		trx.GET("/", ctrl.ListTransactions)
+		trx.PUT("/:id/status", ctrl.UpdateTransactionStatus)
 	}
 }
