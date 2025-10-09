@@ -15,8 +15,11 @@ func NewTransactionService(repo *repository.TransactionRepository) *TransactionS
 }
 
 func (s *TransactionService) Create(trx *model.Transaction) (*model.Transaction, error) {
-	trx.Status = string(model.Status(model.StatusPending)) // Additional business logic can be added here
+	trx.Status = model.Status(model.StatusPending) // Additional business logic can be added here
 	// e.g., validate currency, check sender/receiver accounts, etc.
+	if trx.Amount <= 0 {
+		return &model.Transaction{}, errors.New("amount must be greater than zero")
+	}
 	err := s.Repo.CreateTransaction(trx)
 	if err != nil {
 		return nil, err
@@ -32,17 +35,17 @@ func (s *TransactionService) List(limit, offset int) ([]model.Transaction, error
 	return s.Repo.ListTransactions(limit, offset)
 }
 
-func (s *TransactionService) UpdateStatus(id string, newStatus string) (*model.Transaction, error) {
+func (s *TransactionService) UpdateStatus(id string, newStatus model.Status) (*model.Transaction, error) {
 	trx, err := s.Repo.GetTransactionByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	if trx.Status != string(model.StatusPending) {
+	if trx.Status != model.StatusPending {
 		return nil, errors.New("only pending transactions can be updated")
 	}
 
-	if newStatus != string(model.StatusCompleted) && newStatus != string(model.StatusFailed) {
+	if newStatus != model.StatusCompleted && newStatus != model.StatusFailed {
 		return nil, errors.New("invalid status transition")
 	}
 
@@ -52,6 +55,6 @@ func (s *TransactionService) UpdateStatus(id string, newStatus string) (*model.T
 	}
 
 	// Reflect change in returned struct
-	trx.Status = string(model.Status(newStatus))
+	trx.Status = model.Status(newStatus)
 	return trx, nil
 }

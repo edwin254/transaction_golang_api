@@ -20,7 +20,7 @@ type Transaction struct {
 	Currency  string    `json:"currency"`
 	Sender    string    `json:"sender"`
 	Receiver  string    `json:"receiver"`
-	Status    string    `json:"status"`
+	Status    Status    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

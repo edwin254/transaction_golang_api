@@ -83,7 +83,12 @@ func (c *TransactionController) UpdateTransactionStatus(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	updated, err := c.service.UpdateStatus(id, req.Status)
+	statusInput := model.Status(req.Status)
+	if statusInput != model.StatusCompleted && statusInput != model.StatusFailed {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "status must be either 'completed' or 'failed'"})
+		return
+	}
+	updated, err := c.service.UpdateStatus(id, statusInput)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

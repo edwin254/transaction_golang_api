@@ -63,6 +63,7 @@ func (r *TransactionRepository) ListTransactions(limit, offset int) ([]model.Tra
 func (r *TransactionRepository) UpdateTransactionStatus(id string, newStatus model.Status) error {
 	query := `UPDATE transactions SET status = ? 
 	          WHERE id = ? AND status = 'pending'`
+
 	result, err := r.DB.Exec(query, newStatus, id)
 	if err != nil {
 		return err
