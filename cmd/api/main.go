@@ -2,7 +2,7 @@ package main
 
 import (
 	"gapstack-api/internal/config"
-	"gapstack/internal/routes"
+	"gapstack-api/internal/routes"
 	"log"
 
 	"github.com/gin-gonic/gin"

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"yourapp/internal/model"
+	"gapstack-api/internal/model"
 
 	"github.com/google/uuid"
 )
@@ -18,28 +18,28 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 }
 
 // Create
-func (r *TransactionRepository) Create(tx *model.Transaction) error {
-	tx.ID = uuid.New().String()
+func (r *TransactionRepository) CreateTransaction(trx *model.Transaction) error {
+	trx.ID = uuid.New().String()
 	query := `INSERT INTO transactions (id, amount, currency, sender, receiver, status)
 	          VALUES (?, ?, ?, ?, ?, ?)`
-	_, err := r.DB.Exec(query, tx.ID, tx.Amount, tx.Currency, tx.Sender, tx.Receiver, tx.Status)
+	_, err := r.DB.Exec(query, trx.ID, trx.Amount, trx.Currency, trx.Sender, trx.Receiver, trx.Status)
 	return err
 }
 
 // Retrieve by ID
-func (r *TransactionRepository) GetByID(id string) (*model.Transaction, error) {
+func (r *TransactionRepository) GetTransactionByID(id string) (*model.Transaction, error) {
 	query := `SELECT id, amount, currency, sender, receiver, status FROM transactions WHERE id = ?`
 	row := r.DB.QueryRow(query, id)
 
-	var tx model.Transaction
-	if err := row.Scan(&tx.ID, &tx.Amount, &tx.Currency, &tx.Sender, &tx.Receiver, &tx.Status); err != nil {
+	var trx model.Transaction
+	if err := row.Scan(&trx.ID, &trx.Amount, &trx.Currency, &trx.Sender, &trx.Receiver, &trx.Status); err != nil {
 		return nil, err
 	}
-	return &tx, nil
+	return &trx, nil
 }
 
 // List with pagination
-func (r *TransactionRepository) List(limit, offset int) ([]model.Transaction, error) {
+func (r *TransactionRepository) ListTransactions(limit, offset int) ([]model.Transaction, error) {
 	query := `SELECT id, amount, currency, sender, receiver, status FROM transactions
 	          ORDER BY ROWID DESC LIMIT ? OFFSET ?`
 	rows, err := r.DB.Query(query, limit, offset)
@@ -50,17 +50,17 @@ func (r *TransactionRepository) List(limit, offset int) ([]model.Transaction, er
 
 	var transactions []model.Transaction
 	for rows.Next() {
-		var tx model.Transaction
-		if err := rows.Scan(&tx.ID, &tx.Amount, &tx.Currency, &tx.Sender, &tx.Receiver, &tx.Status); err != nil {
+		var trx model.Transaction
+		if err := rows.Scan(&trx.ID, &trx.Amount, &trx.Currency, &trx.Sender, &trx.Receiver, &trx.Status); err != nil {
 			return nil, err
 		}
-		transactions = append(transactions, tx)
+		transactions = append(transactions, trx)
 	}
 	return transactions, nil
 }
 
 // Update status (only valid transitions)
-func (r *TransactionRepository) UpdateStatus(id string, newStatus model.Status) error {
+func (r *TransactionRepository) UpdateTransactionStatus(id string, newStatus model.Status) error {
 	query := `UPDATE transactions SET status = ? 
 	          WHERE id = ? AND status = 'pending'`
 	result, err := r.DB.Exec(query, newStatus, id)

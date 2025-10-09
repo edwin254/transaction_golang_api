@@ -3,13 +3,14 @@ package routes
 import (
 	"gapstack-api/internal/controller"
 	"gapstack-api/internal/repository"
-	"gapstack/internal/service"
+	"gapstack-api/internal/service"
+
+	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
+func RegisterRoutes(router *gin.Engine, db *sql.DB) {
 	repo := repository.NewTransactionRepository(db)
 	svc := service.NewTransactionService(repo)
 	ctrl := controller.NewTransactionController(svc)

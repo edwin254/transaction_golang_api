@@ -4,6 +4,7 @@ import (
 	"gapstack-api/internal/model"
 	"gapstack-api/internal/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +23,7 @@ func (c *TransactionController) CreateTransaction(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	created, err := c.service.CreateTransaction(&trx)
+	created, err := c.service.Create(&trx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -32,7 +33,7 @@ func (c *TransactionController) CreateTransaction(ctx *gin.Context) {
 
 func (c *TransactionController) GetTransactionByID(ctx *gin.Context) {
 	id := ctx.Param("id")
-	trx, err := c.service.GetTransactionByID(id)
+	trx, err := c.service.GetByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -41,27 +42,51 @@ func (c *TransactionController) GetTransactionByID(ctx *gin.Context) {
 }
 
 func (c *TransactionController) ListTransactions(ctx *gin.Context) {
-	transactions, err := c.service.ListTransactions()
+	// Default values
+	limit := 10
+	offset := 0
+
+	// Parse optional query parameters
+	if l := ctx.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	if o := ctx.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	// Fetch paginated list
+	transactions, err := c.service.List(limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, transactions)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"limit":        limit,
+		"offset":       offset,
+		"count":        len(transactions),
+		"transactions": transactions,
+	})
 }
 
 func (c *TransactionController) UpdateTransactionStatus(ctx *gin.Context) {
 	id := ctx.Param("id")
-	var body struct {
-		Status string `json:"status"`
+	var req struct {
+		Status string `json:"status" binding:"required"`
 	}
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	trx, err := c.service.UpdateTransactionStatus(id, body.Status)
+	updated, err := c.service.UpdateStatus(id, req.Status)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, trx)
+	ctx.JSON(http.StatusOK, updated)
 }
