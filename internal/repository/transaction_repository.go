@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 
 	"gapstack-api/internal/model"
 
@@ -17,13 +19,47 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 	return &TransactionRepository{DB: db}
 }
 
+// validateTransaction checks the transaction fields for validity.
+func validateTransaction(trx *model.Transaction) error {
+	if trx.Amount <= 0 {
+		return errors.New("amount must be positive")
+	}
+	if trx.Currency == "" {
+		return errors.New("currency is required")
+	}
+	if trx.Sender == "" {
+		return errors.New("sender is required")
+	}
+	if trx.Receiver == "" {
+		return errors.New("receiver is required")
+	}
+	if trx.Status == "" {
+		return errors.New("status is required")
+	}
+	return nil
+}
+
 // Create
 func (r *TransactionRepository) CreateTransaction(trx *model.Transaction) error {
-	trx.ID = uuid.New().String()
+	// Input validation
+	if err := validateTransaction(trx); err != nil {
+		return fmt.Errorf("invalid transaction: %w", err)
+	}
+
+	// Generate UUID if not provided
+	if trx.ID == "" {
+		trx.ID = uuid.New().String()
+	}
+
 	query := `INSERT INTO transactions (id, amount, currency, sender, receiver, status)
 	          VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := r.DB.Exec(query, trx.ID, trx.Amount, trx.Currency, trx.Sender, trx.Receiver, trx.Status)
-	return err
+
+	if err != nil {
+		log.Fatalf("failed to insert transaction: %w", err)
+		return err // Return nil transaction on error
+	}
+	return nil
 }
 
 // Retrieve by ID

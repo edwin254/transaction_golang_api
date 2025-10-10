@@ -3,6 +3,7 @@ package controller
 import (
 	"gapstack-api/internal/model"
 	"gapstack-api/internal/service"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -19,6 +20,8 @@ func NewTransactionController(svc *service.TransactionService) *TransactionContr
 
 func (c *TransactionController) CreateTransaction(ctx *gin.Context) {
 	var trx model.Transaction
+	log.Println("Received transaction creation request")
+
 	if err := ctx.ShouldBindJSON(&trx); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
