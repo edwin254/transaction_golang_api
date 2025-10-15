@@ -1,5 +1,7 @@
-CREATE TABLE transactions (
-  id TEXT PRIMARY KEY,
+CREATE EXTENSION IF NOT EXISTS  "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID NOT NULL DEFAULT (uuid_generate_v4()) PRIMARY KEY,
   amount REAL NOT NULL,
   currency TEXT NOT NULL,
   sender TEXT NOT NULL,

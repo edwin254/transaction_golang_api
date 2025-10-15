@@ -18,7 +18,7 @@ func (s *TransactionService) Create(trx *model.Transaction) (*model.Transaction,
 	trx.Status = model.Status(model.StatusPending) // Additional business logic can be added here
 	// e.g., validate currency, check sender/receiver accounts, etc.
 	if trx.Amount <= 0 {
-		return &model.Transaction{}, errors.New("amount must be greater than zero")
+		return &model.Transaction{}, errors.New("amount must be positive amount")
 	}
 	err := s.Repo.CreateTransaction(trx)
 	if err != nil {

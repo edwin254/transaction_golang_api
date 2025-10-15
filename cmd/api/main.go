@@ -1,29 +1,24 @@
 package main
 
 import (
-	"database/sql"
+	app "gapstack-api/cmd/api"
 	"gapstack-api/internal/routes"
 	"gapstack-api/internal/seeder"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/sqlite" // Correct driver name
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Correct driver name
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/mattn/go-sqlite3" // SQLite driver for database/sql
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", "./transactions.db")
-	if err != nil {
-		log.Fatal("failed to connect to database:", err)
-	}
-	defer db.Close()
+	var app app.App
 	// Run migrations
 	m, err := migrate.New(
 		"file://internal/migrations",
-		"sqlite://transactions.db",
+		"postgres://postgres:postgres@localhost:5432/example?sslmode=disable",
 	)
 	if err != nil {
 		log.Fatalf("Migration setup failed: %v", err)
@@ -35,7 +30,7 @@ func main() {
 
 	log.Println("Migrations applied successfully")
 
-	// ✅ Run seeder before starting API
+	// Run seeder before starting API
 	if err := seeder.SeedTransactions(db); err != nil {
 		log.Fatalf("failed to seed database: %v", err)
 	}
