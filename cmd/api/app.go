@@ -103,7 +103,7 @@ func (a *App) CreateRoutes() {
 
 func (a *App) Run() {
 	if a.Routes == nil {
-		log.Fatal("Router not initialized. Did you call CreateRoutes() before Run()?")
+		log.Fatal("Router not initialized.")
 	}
 	a.Routes.Run(":8080")
 	log.Println("Server running on port 8080")
