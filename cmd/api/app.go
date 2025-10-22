@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"database/sql"
@@ -12,7 +12,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Correct driver name
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,13 +24,6 @@ type App struct {
 // LoadDBConfig loads environment variables from a .env file and the system,
 // then populates and returns a DBConfig struct.
 func LoadDBConfig() (config.DBConfig, error) {
-	// 1. Load .env file. gotdotenv.Load() handles if the file is missing or loads it successfully.
-	// If you need specific file paths, use godotenv.Load(".env.development", ".env.test", ...)
-	if err := godotenv.Load(); err != nil {
-
-		// Log a warning if the file isn't found,
-		log.Println("Warning: Could not find .env file.")
-	}
 
 	var cfg config.DBConfig
 
@@ -39,6 +31,7 @@ func LoadDBConfig() (config.DBConfig, error) {
 	cfg.POSTGRES_HOST = os.Getenv("POSTGRES_HOST")
 	cfg.POSTGRES_USER = os.Getenv("POSTGRES_USER")
 	cfg.POSTGRES_DB = os.Getenv("POSTGRES_DB")
+	cfg.POSTGRES_PASSWORD = os.Getenv("POSTGRES_PASSWORD")
 
 	// Check for required string variables
 	if cfg.POSTGRES_HOST == "" || cfg.POSTGRES_USER == "" || cfg.POSTGRES_DB == "" {
@@ -52,7 +45,7 @@ func LoadDBConfig() (config.DBConfig, error) {
 }
 
 func (a *App) CreateConnection(dbCfg config.DBConfig) error {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", &dbCfg.POSTGRES_USER, &dbCfg.POSTGRES_PASSWORD, &dbCfg.POSTGRES_HOST, &dbCfg.POSTGRES_DB)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbCfg.POSTGRES_USER, dbCfg.POSTGRES_PASSWORD, dbCfg.POSTGRES_HOST, dbCfg.POSTGRES_DB)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return fmt.Errorf("error opening database connection: %w", err)
@@ -70,23 +63,16 @@ func (a *App) CreateConnection(dbCfg config.DBConfig) error {
 	return nil
 }
 
-func (a *App) CreateRoutes() {
-	r := gin.Default()
-	routes.RegisterRoutes(r, a.DB)
-}
+func (a *App) RunMigrations(dbCfg config.DBConfig) {
 
-func (a *App) Run() {
-	a.Routes.Run(":8080")
-
-	log.Println("Server running on port 8080")
-}
-
-func (a *App) RunMigrations() {
+	log.Printf("RUN MIGRATION  loaded successfully. Host: %s, DB: %s",
+		dbCfg.POSTGRES_HOST, dbCfg.POSTGRES_DB)
 
 	// Run migrations
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", dbCfg.POSTGRES_USER, dbCfg.POSTGRES_PASSWORD, dbCfg.POSTGRES_HOST, dbCfg.POSTGRES_DB)
 	m, err := migrate.New(
-		"file://internal/migrations",
-		"postgres://postgres:postgres@localhost:5432/example?sslmode=disable",
+		"file://app/internal/migrations",
+		connStr,
 	)
 	if err != nil {
 		log.Fatalf("Migration setup failed: %v", err)
@@ -107,4 +93,18 @@ func (a *App) RunSeeder() {
 	}
 
 	log.Println("✅ Seeding DB Done")
+}
+
+func (a *App) CreateRoutes() {
+	r := gin.Default()
+	routes.RegisterRoutes(r, a.DB)
+	a.Routes = r
+}
+
+func (a *App) Run() {
+	if a.Routes == nil {
+		log.Fatal("Router not initialized. Did you call CreateRoutes() before Run()?")
+	}
+	a.Routes.Run(":8080")
+	log.Println("Server running on port 8080")
 }

@@ -1,19 +1,29 @@
-FROM golang:1.23.4-alpine
+FROM golang:1.25.2-alpine AS builder
 
 WORKDIR /app
 
-# Install git for downloading Air
-RUN apk add --no-cache git
-RUN go install github.com/air-verse/air@latest
+COPY go.mod go.sum ./
 
-
-COPY go.mod ./
-COPY go.sum ./
 RUN go mod download  && go mod verify
 
 COPY . .
-COPY .air.toml . 
 
-RUN go build -v -o /cmd/api/main .
+RUN ls -alh
 
-CMD ["/cmd/api/main"]
+RUN CGO_ENABLED=0 go build -v -o /app/main ./cmd/api
+
+# ----------------------------------------------------------------------
+# Stage 2: Final Image
+# Use a minimal, non-OS image for the final deployment for security and size.
+# ----------------------------------------------------------------------
+FROM scratch
+
+# Copy the built executable from the builder stage
+# It's now located at /app/main in the scratch environment
+COPY --from=builder /app/main /main
+
+# Define the user to run the application as
+USER 1000:1000
+
+# Set the entry point to run the application
+ENTRYPOINT ["/main"]

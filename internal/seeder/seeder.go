@@ -18,7 +18,7 @@ func SeedTransactions(db *sql.DB) error {
 	}
 
 	if count > 0 {
-		log.Println("✅ Seeder skipped — transactions table already populated")
+		log.Println("Seeder skipped — transactions table already populated")
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func SeedTransactions(db *sql.DB) error {
 
 	stmt, err := db.Prepare(`
 		INSERT INTO transactions (id, amount, currency, sender, receiver, status)
-		VALUES (?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`)
 	if err != nil {
 		return err

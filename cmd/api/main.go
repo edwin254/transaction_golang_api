@@ -1,43 +1,35 @@
 package main
 
 import (
-	app "gapstack-api/cmd/api"
-	"gapstack-api/internal/routes"
-	"gapstack-api/internal/seeder"
+	"fmt"
 	"log"
 
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Correct driver name
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
-func main() {
-	var app app.App
-	// Run migrations
-	m, err := migrate.New(
-		"file://internal/migrations",
-		"postgres://postgres:postgres@localhost:5432/example?sslmode=disable",
-	)
+func init() {
+	// 1. Check for the .env file in the current directory (good for local testing from root)
+	err := godotenv.Load("/app/app.env")
+
+	// If it still fails, log the error but don't halt,
+	// as environment variables might be set directly (e.g., in a Docker environment)
 	if err != nil {
-		log.Fatalf("Migration setup failed: %v", err)
+		log.Printf("Warning: .env file not found, loading system environment variables only. Error: %v", err)
+	} else {
+		fmt.Println(".env file loaded successfully.")
 	}
+}
 
-	if err := m.Up(); err != nil && err.Error() != "no change" {
-		log.Fatalf("Migration failed: %v", err)
-	}
+func main() {
 
-	log.Println("Migrations applied successfully")
+	var app App
+	cfg, _ := LoadDBConfig()
+	app.CreateConnection(cfg)
+	app.RunMigrations(cfg)
+	app.RunSeeder()
+	app.CreateRoutes()
+	app.Run()
 
-	// Run seeder before starting API
-	if err := seeder.SeedTransactions(db); err != nil {
-		log.Fatalf("failed to seed database: %v", err)
-	}
-
-	r := gin.Default()
-	routes.RegisterRoutes(r, db)
-
-	log.Println("✅ Server running on port 8080")
-	r.Run(":8080")
 }

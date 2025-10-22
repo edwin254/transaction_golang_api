@@ -64,7 +64,7 @@ func (r *TransactionRepository) CreateTransaction(trx *model.Transaction) error 
 
 // Retrieve by ID
 func (r *TransactionRepository) GetTransactionByID(id string) (*model.Transaction, error) {
-	query := `SELECT id, amount, currency, sender, receiver, status FROM transactions WHERE id = ?`
+	query := `SELECT id, amount, currency, sender, receiver, status FROM transactions WHERE id = $1`
 	row := r.DB.QueryRow(query, id)
 
 	var trx model.Transaction
@@ -76,8 +76,8 @@ func (r *TransactionRepository) GetTransactionByID(id string) (*model.Transactio
 
 // List with pagination
 func (r *TransactionRepository) ListTransactions(limit, offset int) ([]model.Transaction, error) {
-	query := `SELECT id, amount, currency, sender, receiver, status FROM transactions
-	          ORDER BY ROWID DESC LIMIT ? OFFSET ?`
+	query := `SELECT * FROM transactions
+	          ORDER BY id DESC LIMIT $1 OFFSET $2`
 	rows, err := r.DB.Query(query, limit, offset)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (r *TransactionRepository) ListTransactions(limit, offset int) ([]model.Tra
 	var transactions []model.Transaction
 	for rows.Next() {
 		var trx model.Transaction
-		if err := rows.Scan(&trx.ID, &trx.Amount, &trx.Currency, &trx.Sender, &trx.Receiver, &trx.Status); err != nil {
+		if err := rows.Scan(&trx.ID, &trx.Amount, &trx.Currency, &trx.Sender, &trx.Receiver, &trx.Status, &trx.CreatedAt, &trx.UpdatedAt); err != nil {
 			return nil, err
 		}
 		transactions = append(transactions, trx)
@@ -97,8 +97,8 @@ func (r *TransactionRepository) ListTransactions(limit, offset int) ([]model.Tra
 
 // Update status (only valid transitions)
 func (r *TransactionRepository) UpdateTransactionStatus(id string, newStatus model.Status) error {
-	query := `UPDATE transactions SET status = ? 
-	          WHERE id = ? AND status = 'pending'`
+	query := `UPDATE transactions SET status = $1 
+	          WHERE id = $2 AND status = 'pending'`
 
 	result, err := r.DB.Exec(query, newStatus, id)
 	if err != nil {
