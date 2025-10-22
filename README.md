@@ -8,11 +8,32 @@
 │   └── api/
 │       ├── main.go
 │       └── app.go
-├── internal/
-│   ├── controllers/
-│   ├── services/
-│   ├── repositories/
-│   └── models/
+├── internal
+│   ├── config
+│   │   └── db.go
+│   ├── controller
+│   │   ├── chatgpt.md
+│   │   ├── gemini.md
+│   │   ├── grok.md
+│   │   └── transaction_controller.go
+│   ├── errors
+│   │   └── errors.go
+│   ├── migrations
+│   │   ├── 0001_create_transactions.up.sql
+│   │   └── 0002_drop_transaction.down.sql
+│   ├── model
+│   │   └── transaction.go
+│   ├── repository
+│   │   └── transaction_repository.go
+│   ├── routes
+│   │   └── routes.go
+│   ├── seeder
+│   │   ├── init.sql
+│   │   └── seeder.go
+│   ├── service
+│   │   └── transaction_service.go
+│   └── validator
+│       └── validators.go
 ├── .env
 ├── go.mod
 ├── go.sum
